@@ -1,49 +1,46 @@
-Описание краулера и некоторые замечания.
+Simple web crawler
 ========================================
 
-Внешние зависимости
+External dependencies
 -------------------
-* https://godoc.org/golang.org/x/net/html (Потоковый парсер)
-* https://github.com/buaazp/fasthttprouter (Роутер)
-* https://github.com/valyala/fasthttp (Сервер)
-* https://github.com/h2non/gock (Моки внешних HTTP запросов)
+* https://godoc.org/golang.org/x/net/html
+* https://github.com/buaazp/fasthttprouter
+* https://github.com/valyala/fasthttp
+* https://github.com/h2non/gock
 
-Запуск тестов
+Running the tests
 -------------
-Скрипт **test.sh**:
+Shell script **test.sh**:
 
 ```bash
 go test -v ./models ./server ./pool
 ```
 
-Запуск сервера
+Running the server
 --------------
 
-Скрипт **run.sh** c *опциональными* флагами:
-* **-port** для указания TCP порта.
-* **-debug** для подробного логирования.
+Shell script **run.sh** with *optional* flags:
+* **-port** TCP port.
+* **-debug** verbose logging.
 
 ```bash
 go run ./main.go -port=8081 -debug
 ```
 
-Замечания по реализации
+Implementation notes
 -----------------------
 
-Для ограничения скорости загрузки с одного домена используется **time.Ticker**.
-Каждому домену ставится в соответствие один канал вида **<-chan time.Time**, который и
-блокирует выполнение горутин с этим доменом до получения сообщения от **Ticker**'а.
+**time.Ticker** was used to implement throttling per domain.
+Each domain has a corresponding **<-chan time.Time** channel, and this channel is used
+as a semaphore to control the download speed amongst all goroutines for this domain.
 
-Для простоты реализации **CSV** отдаю как **text/csv**, прочие ответы как **text/plain**.
+For the sake of simplicity I retrun **CSV** as **text/csv**, others responses as **text/plain**.
+Default server port is **8080**.
 
-
-Описание API
+API description
 ------------
 
-Ответы в **text/plain** и **text/csv**, разделитель в **CSV** ответе - табуляция.
-По умолчанию сервер запускается на **8080** порту.
-
-#### Загрузка файла со списком ссылок
+#### Upload file with link list
 
 ```bash
 $ curl -X POST --data-binary "@urls.txt" localhost:8080/tasks
@@ -57,7 +54,7 @@ $ curl -X POST --data-binary "@urls.txt" localhost:8080/tasks
 2⏎
 ```
 
-#### Запрос таска, находящегося в работе
+#### Get working task
 
 ```bash
 curl -v "localhost:8080/tasks/3"
@@ -68,7 +65,7 @@ curl -v "localhost:8080/tasks/3"
 * Connection #0 to host localhost left intact
 ```
 
-#### Запрос не существующего/удаленного таска
+#### Get not existing/deleted task
 
 ```bash
  curl -v "localhost:8080/tasks/1"
@@ -82,7 +79,7 @@ curl -v "localhost:8080/tasks/3"
 Task not found.⏎
 ```
 
-#### Запрос завершенного таска
+#### Get completed task
 
 ```bash
 curl -v "localhost:8080/tasks/1"
@@ -100,7 +97,7 @@ StatusCode	URL	Title	Description	Keywords	OGImage
 200	https://rakyll.org/go-tool-flags/	Go tooling essentials · Go, the unwritten parts
 ```
 
-#### Удаление таска, находящегося в работе
+#### Delete working task
 
 ```bash
 curl -v "localhost:8080/tasks/4"
@@ -111,7 +108,7 @@ curl -v "localhost:8080/tasks/4"
 * Connection #0 to host localhost left intact
 ```
 
-#### Удаление завершенного таска
+#### Delete completed task
 
 ```bash
  curl -v "localhost:8080/tasks/1?delete=1"
